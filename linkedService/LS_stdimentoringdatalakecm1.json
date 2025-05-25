@@ -1,0 +1,15 @@
+{
+	"name": "LS_stdimentoringdatalakecm1",
+	"properties": {
+		"description": "Linked service to connect to the ADLS, stdimentoringdatalakecm1.",
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://stdimentoringdatalakecm1.dfs.core.windows.net/"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
