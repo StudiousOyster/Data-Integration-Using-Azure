@@ -112,7 +112,7 @@
 										"source": {
 											"type": "SqlServerSource",
 											"sqlReaderQuery": {
-												"value": "@concat(\n    'SELECT * \n    FROM ',\n    item().tableName,\n    ' WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Azure Watermark Tbl Lookup').output.firstRow.watermark,\n    ''''\n)",
+												"value": "@concat(\n    'SELECT * \n    FROM youflix.',\n    item().tableName,\n    ' WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    formatDateTime(activity('Azure Watermark Tbl Lookup').output.firstRow.watermark, 'yyyy-MM-dd HH:mm:ss.fff'),\n    ''''\n)",
 												"type": "Expression"
 											},
 											"queryTimeout": "02:00:00",
@@ -159,7 +159,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"folder_name": {
-													"value": "@item().tableName",
+													"value": "youflix_@{item().tableName}",
 													"type": "Expression"
 												},
 												"file_name": {
