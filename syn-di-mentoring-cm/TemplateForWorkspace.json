@@ -50,6 +50,7 @@
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
+				"description": "To connect to the ADLS > data > bronze > youflix  folders path",
 				"linkedServiceName": {
 					"referenceName": "LS_stdimentoringdatalakecm1",
 					"type": "LinkedServiceReference"
