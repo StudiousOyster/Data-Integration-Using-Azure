@@ -24,8 +24,6 @@
 			{
 				"name": "ForEach1",
 				"type": "ForEach",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Watermark Column Map JSON",
@@ -45,11 +43,9 @@
 							"name": "CP_YouFlixDB_ADLSBronze",
 							"description": "Copy data incrementally from on premises sql server DB, YouFlix, tables to ADLS bronze layer",
 							"type": "Copy",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [
 								{
-									"activity": "Lookup1",
+									"activity": "Azure Watermark Tbl Lookup",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -126,10 +122,9 @@
 							]
 						},
 						{
-							"name": "Lookup1",
+							"name": "Azure Watermark Tbl Lookup",
+							"description": "To lookup the contents of Azure watermark table.",
 							"type": "Lookup",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
@@ -152,7 +147,8 @@
 							}
 						},
 						{
-							"name": "Copy data1",
+							"name": "Update watermark table",
+							"description": "To update the azure table storage - watermark table.",
 							"type": "Copy",
 							"dependsOn": [
 								{
@@ -191,10 +187,8 @@
 								"sink": {
 									"type": "AzureTableSink",
 									"azureTableInsertType": "merge",
-									"azureTablePartitionKeyName": {
-										"value": "@item().tableName",
-										"type": "Expression"
-									},
+									"azureTablePartitionKeyName": "PartitionKey",
+									"azureTableRowKeyName": "RowKey",
 									"writeBatchSize": 10000
 								},
 								"enableStaging": false,
@@ -303,6 +297,29 @@
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Copy data2",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"enableStaging": false
 				}
 			}
 		],
