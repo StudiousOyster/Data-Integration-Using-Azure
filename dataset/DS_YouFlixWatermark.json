@@ -5,6 +5,11 @@
 			"referenceName": "LS_YouFlixWatermark",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"partitionKey": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "AzureTable",
 		"schema": [],

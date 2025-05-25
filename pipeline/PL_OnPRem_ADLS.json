@@ -4,10 +4,9 @@
 		"description": "Pipeline to incrementally copy data from on premises sql db tables to ADLS bronze layer.",
 		"activities": [
 			{
-				"name": "Set variable1",
+				"name": "PL Start Time",
+				"description": "To set the variable with the start time of the pipeline to later update the watermark table",
 				"type": "SetVariable",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"secureOutput": false,
@@ -25,11 +24,9 @@
 			{
 				"name": "ForEach1",
 				"type": "ForEach",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "Lookup1",
+						"activity": "Watermark Column Map JSON",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -37,6 +34,10 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('Watermark Column Map JSON').output.value",
+						"type": "Expression"
+					},
 					"activities": [
 						{
 							"name": "CP_YouFlixDB_ADLSBronze",
@@ -44,7 +45,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "YouFlix Watermark Tbl Data",
+									"activity": "Lookup1",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -61,6 +62,10 @@
 							"typeProperties": {
 								"source": {
 									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@concat(\n    'SELECT  * \n    FROM ',\n    item().tableName,\n    'WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Lookup1').output.firstRow.watermark,\n    ''''\n)",
+										"type": "Expression"
+									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
 								},
@@ -89,19 +94,35 @@
 							"inputs": [
 								{
 									"referenceName": "DS_YouFLixDB",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"schemaName": "youflix",
+										"tableName": {
+											"value": "@item().tableName",
+											"type": "Expression"
+										}
+									}
 								}
 							],
 							"outputs": [
 								{
 									"referenceName": "DS_ADLS_bronze_youflix",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"folder_name": {
+											"value": "@item().tableName",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@concat(\n    'youflix',\n    '_',\n    item().tableName,\n    '_',\n    formatDateTime(utcNow(), 'yyyyMMddhhmmss'),\n    '.csv'\n)",
+											"type": "Expression"
+										}
+									}
 								}
 							]
 						},
 						{
-							"name": "YouFlix Watermark Tbl Data",
-							"description": "Lookup the data from the azure table YouFlixWatermark",
+							"name": "Lookup1",
 							"type": "Lookup",
 							"dependsOn": [],
 							"policy": {
@@ -119,17 +140,32 @@
 								},
 								"dataset": {
 									"referenceName": "DS_YouFlixWatermark",
-									"type": "DatasetReference"
-								}
+									"type": "DatasetReference",
+									"parameters": {
+										"partitionKey": {
+											"value": "@item().tableName",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": true
 							}
 						}
 					]
 				}
 			},
 			{
-				"name": "Lookup1",
+				"name": "Watermark Column Map JSON",
+				"description": "JSON file consisting of watermark table mapping of youflix DB tables",
 				"type": "Lookup",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "PL Start Time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
