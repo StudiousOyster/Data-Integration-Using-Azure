@@ -1,0 +1,12 @@
+{
+	"name": "LS_AzureKeyVault",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"description": "Linked service to azure key vault - kv-di-mentoring-cm",
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-di-mentoring-cm.vault.azure.net/"
+		}
+	}
+}
