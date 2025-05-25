@@ -1,0 +1,29 @@
+{
+	"name": "LS_OnPremSQLServer",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"description": "Linked service to connect to on premise sql server to connect to Youflix DB. Connect using the secret version - 89779eb540704bad9ad1e1141ca28d0b",
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AzureKeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "YouFlixDB-ConnString",
+				"secretVersion": "89779eb540704bad9ad1e1141ca28d0b"
+			},
+			"userName": "LAIDBACKOYSTER-\\chipp",
+			"password": {
+				"type": "SecureString",
+				"value": "**********"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
