@@ -5,14 +5,26 @@
 		"workspaceName": {
 			"value": "syn-di-mentoring-cm"
 		},
+		"LS_OnPremSQLServer_password": {
+			"value": ""
+		},
 		"syn-di-mentoring-cm-WorkspaceDefaultSqlServer_connectionString": {
 			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:syn-di-mentoring-cm.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"LS_AzureKeyVault_properties_typeProperties_baseUrl": {
 			"value": "https://kv-di-mentoring-cm.vault.azure.net/"
 		},
+		"LS_OnPremSQLServer_properties_typeProperties_connectionString_secretName": {
+			"value": "YouFlixDB-ConnString"
+		},
+		"LS_OnPremSQLServer_properties_typeProperties_userName": {
+			"value": "LAIDBACKOYSTER-\\chipp"
+		},
 		"LS_YouFlixWatermark_properties_typeProperties_sasUri_secretName": {
 			"value": "YouFlixWatermark-SAS"
+		},
+		"LS_stdimentoringdatalakecm1_properties_typeProperties_url": {
+			"value": "https://stdimentoringdatalakecm1.dfs.core.windows.net/"
 		},
 		"syn-di-mentoring-cm-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://stdimentoringdatalakecm1.dfs.core.windows.net"
