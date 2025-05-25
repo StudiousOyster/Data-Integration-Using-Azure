@@ -173,6 +173,15 @@
 							"typeProperties": {
 								"source": {
 									"type": "AzureTableSource",
+									"additionalColumns": [
+										{
+											"name": "watermarkNew",
+											"value": {
+												"value": "@variables('pl_startTime')",
+												"type": "Expression"
+											}
+										}
+									],
 									"azureTableSourceQuery": {
 										"value": "@concat(\n    'PartitionKey eq '''\n    ,item().tableName,''''\n)",
 										"type": "Expression"
@@ -189,8 +198,51 @@
 									"writeBatchSize": 10000
 								},
 								"enableStaging": false,
+								"dataIntegrationUnits": 4,
 								"translator": {
 									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "PartitionKey",
+												"type": "String"
+											},
+											"sink": {
+												"name": "PartitionKey",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "RowKey",
+												"type": "String"
+											},
+											"sink": {
+												"name": "RowKey",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "Timestamp",
+												"type": "DateTimeOffset"
+											},
+											"sink": {
+												"name": "Timestamp",
+												"type": "DateTimeOffset"
+											}
+										},
+										{
+											"source": {
+												"name": "watermarkNew",
+												"type": "String"
+											},
+											"sink": {
+												"name": "watermark",
+												"type": "DateTimeOffset"
+											}
+										}
+									],
 									"typeConversion": true,
 									"typeConversionSettings": {
 										"allowDataTruncation": true,
