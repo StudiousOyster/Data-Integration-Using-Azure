@@ -90,6 +90,42 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/DS_YouFLixDB')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Data set to connect to the different tables in YouFLixDB",
+				"linkedServiceName": {
+					"referenceName": "LS_OnPremSQLServer",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schemaName": {
+						"type": "string"
+					},
+					"tableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/LS_OnPremSQLServer')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/LS_AzureKeyVault')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
