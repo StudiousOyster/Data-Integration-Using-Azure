@@ -16,7 +16,7 @@
 				"typeProperties": {
 					"variableName": "pl_startTime",
 					"value": {
-						"value": "@pipeline().TriggerTime",
+						"value": "@formatDateTime(pipeline().TriggerTime, 'yyyy-MM-ddTHH:mm:ssZ')",
 						"type": "Expression"
 					}
 				}
@@ -63,7 +63,7 @@
 								"source": {
 									"type": "SqlServerSource",
 									"sqlReaderQuery": {
-										"value": "@concat(\n    'SELECT  * \n    FROM ',\n    item().tableName,\n    'WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Lookup1').output.firstRow.watermark,\n    ''''\n)",
+										"value": "@concat(\n    'SELECT  * \n    FROM ',\n    item().tableName,\n    'WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Azure Watermark Tbl Lookup').output.firstRow,\n    ''''\n)",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -300,7 +300,8 @@
 				}
 			},
 			{
-				"name": "Copy data2",
+				"name": "To create Success file in adls",
+				"description": "To create the Success.csv file in adls bronze > youflix",
 				"type": "Copy",
 				"dependsOn": [
 					{
@@ -319,8 +320,52 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"enableStaging": false
-				}
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT 'Success!!'\nWHERE 1=1;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_csvGeneration_Success",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ADLS_bronze_youflix",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder_name": {
+								"value": "@{string('')}",
+								"type": "Expression"
+							},
+							"file_name": "success.csv"
+						}
+					}
+				]
 			}
 		],
 		"variables": {

@@ -1,0 +1,51 @@
+{
+	"name": "DS_csvGeneration_Success",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_OnPremSQLServer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "subscription_id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "subscription_name",
+				"type": "varchar"
+			},
+			{
+				"name": "subscription_type",
+				"type": "varchar"
+			},
+			{
+				"name": "subscription_video_quality",
+				"type": "varchar"
+			},
+			{
+				"name": "subscription_max_devices",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "created_timestamp",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "expiration_timestamp",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "youflix",
+			"table": "subscription"
+		}
+	}
+}
