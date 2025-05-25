@@ -1,0 +1,19 @@
+{
+	"name": "DS_YouflixDB_WMColMap",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_stdimentoringdatalakecm1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "watermarkCollumMapFile.json",
+				"fileSystem": "watermark"
+			}
+		},
+		"schema": {}
+	}
+}

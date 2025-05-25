@@ -4,62 +4,130 @@
 		"description": "Pipeline to incrementally copy data from on premises sql db tables to ADLS bronze layer.",
 		"activities": [
 			{
-				"name": "CP_YouFlixDB_ADLSBronze",
-				"description": "Copy data incrementally from on premises sql server DB, YouFlix, tables to ADLS bronze layer",
-				"type": "Copy",
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "SqlServerSource",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "DelimitedTextSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "DelimitedTextWriteSettings",
-							"quoteAllText": true,
-							"fileExtension": ".txt"
-						}
-					},
-					"enableStaging": false,
-					"dataIntegrationUnits": 4,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
+					"variableName": "pl_startTime",
+					"value": {
+						"value": "@pipeline().TriggerTime",
+						"type": "Expression"
 					}
-				},
-				"inputs": [
-					{
-						"referenceName": "DS_YouFLixDB",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "DS_ADLS_bronze_youflix",
-						"type": "DatasetReference"
-					}
-				]
+				}
 			},
 			{
-				"name": "YouFlix Watermark Tbl Data",
-				"description": "Lookup the data from the azure table YouFlixWatermark",
+				"name": "ForEach1",
+				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"activities": [
+						{
+							"name": "CP_YouFlixDB_ADLSBronze",
+							"description": "Copy data incrementally from on premises sql server DB, YouFlix, tables to ADLS bronze layer",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "YouFlix Watermark Tbl Data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_YouFLixDB",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ADLS_bronze_youflix",
+									"type": "DatasetReference"
+								}
+							]
+						},
+						{
+							"name": "YouFlix Watermark Tbl Data",
+							"description": "Lookup the data from the azure table YouFlixWatermark",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureTableSource",
+									"azureTableSourceIgnoreTableNotFound": false
+								},
+								"dataset": {
+									"referenceName": "DS_YouFlixWatermark",
+									"type": "DatasetReference"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Lookup1",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -72,16 +140,29 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "AzureTableSource",
-						"azureTableSourceIgnoreTableNotFound": false
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
 					},
 					"dataset": {
-						"referenceName": "DS_YouFlixWatermark",
+						"referenceName": "DS_YouflixDB_WMColMap",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
+		"variables": {
+			"pl_startTime": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
