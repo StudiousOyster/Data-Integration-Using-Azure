@@ -18,10 +18,7 @@
 		"type": "SqlServerTable",
 		"schema": [],
 		"typeProperties": {
-			"schema": {
-				"value": "@dataset().schemaName",
-				"type": "Expression"
-			},
+			"schema": "youflix",
 			"table": {
 				"value": "@dataset().tableName",
 				"type": "Expression"
