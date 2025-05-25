@@ -1,6 +1,7 @@
 {
 	"name": "DS_ADLS_bronze_youflix",
 	"properties": {
+		"description": "To connect to the ADLS > data > bronze > youflix  folders path",
 		"linkedServiceName": {
 			"referenceName": "LS_stdimentoringdatalakecm1",
 			"type": "LinkedServiceReference"
