@@ -1,0 +1,15 @@
+{
+	"name": "DS_YouFlixWatermark",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_YouFlixWatermark",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": "YouFlixWatermark"
+		}
+	}
+}
