@@ -65,7 +65,7 @@
 						"typeProperties": {
 							"variableName": "pl_startTime",
 							"value": {
-								"value": "@pipeline().TriggerTime",
+								"value": "@formatDateTime(pipeline().TriggerTime, 'yyyy-MM-ddTHH:mm:ssZ')",
 								"type": "Expression"
 							}
 						}
@@ -73,8 +73,6 @@
 					{
 						"name": "ForEach1",
 						"type": "ForEach",
-						"state": "Inactive",
-						"onInactiveMarkAs": "Succeeded",
 						"dependsOn": [
 							{
 								"activity": "Watermark Column Map JSON",
@@ -94,11 +92,9 @@
 									"name": "CP_YouFlixDB_ADLSBronze",
 									"description": "Copy data incrementally from on premises sql server DB, YouFlix, tables to ADLS bronze layer",
 									"type": "Copy",
-									"state": "Inactive",
-									"onInactiveMarkAs": "Succeeded",
 									"dependsOn": [
 										{
-											"activity": "Lookup1",
+											"activity": "Azure Watermark Tbl Lookup",
 											"dependencyConditions": [
 												"Succeeded"
 											]
@@ -116,7 +112,7 @@
 										"source": {
 											"type": "SqlServerSource",
 											"sqlReaderQuery": {
-												"value": "@concat(\n    'SELECT  * \n    FROM ',\n    item().tableName,\n    'WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Lookup1').output.firstRow.watermark,\n    ''''\n)",
+												"value": "@concat(\n    'SELECT  * \n    FROM ',\n    item().tableName,\n    'WHERE ',\n    item().watermarkColumn,\n    ' > ''',\n    activity('Azure Watermark Tbl Lookup').output.firstRow,\n    ''''\n)",
 												"type": "Expression"
 											},
 											"queryTimeout": "02:00:00",
@@ -175,10 +171,9 @@
 									]
 								},
 								{
-									"name": "Lookup1",
+									"name": "Azure Watermark Tbl Lookup",
+									"description": "To lookup the contents of Azure watermark table.",
 									"type": "Lookup",
-									"state": "Inactive",
-									"onInactiveMarkAs": "Succeeded",
 									"dependsOn": [],
 									"policy": {
 										"timeout": "0.12:00:00",
@@ -202,7 +197,8 @@
 									}
 								},
 								{
-									"name": "Copy data1",
+									"name": "Update watermark table",
+									"description": "To update the azure table storage - watermark table.",
 									"type": "Copy",
 									"dependsOn": [
 										{
@@ -241,10 +237,8 @@
 										"sink": {
 											"type": "AzureTableSink",
 											"azureTableInsertType": "merge",
-											"azureTablePartitionKeyName": {
-												"value": "@item().tableName",
-												"type": "Expression"
-											},
+											"azureTablePartitionKeyName": "PartitionKey",
+											"azureTableRowKeyName": "RowKey",
 											"writeBatchSize": 10000
 										},
 										"enableStaging": false,
@@ -357,6 +351,75 @@
 							},
 							"firstRowOnly": false
 						}
+					},
+					{
+						"name": "To create Success file in adls",
+						"description": "To create the Success.csv file in adls bronze > youflix",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "ForEach1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "SELECT 'Success!!'\nWHERE 1=1;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_csvGeneration_Success",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ADLS_bronze_youflix",
+								"type": "DatasetReference",
+								"parameters": {
+									"folder_name": {
+										"value": "@{string('')}",
+										"type": "Expression"
+									},
+									"file_name": "success.csv"
+								}
+							}
+						]
 					}
 				],
 				"policy": {
@@ -371,8 +434,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/datasets/DS_YouflixDB_WMColMap')]",
-				"[concat(variables('workspaceId'), '/datasets/DS_YouFLixDB')]",
+				"[concat(variables('workspaceId'), '/datasets/DS_csvGeneration_Success')]",
 				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_bronze_youflix')]",
+				"[concat(variables('workspaceId'), '/datasets/DS_YouFLixDB')]",
 				"[concat(variables('workspaceId'), '/datasets/DS_YouFlixWatermark')]"
 			]
 		},
@@ -498,6 +562,62 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/LS_stdimentoringdatalakecm1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_csvGeneration_Success')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_OnPremSQLServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "subscription_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "subscription_name",
+						"type": "varchar"
+					},
+					{
+						"name": "subscription_type",
+						"type": "varchar"
+					},
+					{
+						"name": "subscription_video_quality",
+						"type": "varchar"
+					},
+					{
+						"name": "subscription_max_devices",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "created_timestamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "expiration_timestamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "youflix",
+					"table": "subscription"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/LS_OnPremSQLServer')]"
 			]
 		},
 		{
