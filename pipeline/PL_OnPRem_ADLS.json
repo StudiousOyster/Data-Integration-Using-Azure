@@ -22,7 +22,8 @@
 				}
 			},
 			{
-				"name": "ForEach1",
+				"name": "Looping through the watermark columns",
+				"description": "To loop through the tables and their respective watermark columns",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -309,7 +310,7 @@
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "ForEach1",
+						"activity": "Looping through the watermark columns",
 						"dependencyConditions": [
 							"Succeeded"
 						]
