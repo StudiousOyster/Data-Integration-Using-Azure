@@ -2,6 +2,6 @@
 	"name": "SelfHostedIR",
 	"properties": {
 		"type": "SelfHosted",
-		"description": "Self Hosted IR to connect to on premise SQL server and tables"
+		"description": "Azure mentoring course self hosted IR"
 	}
 }

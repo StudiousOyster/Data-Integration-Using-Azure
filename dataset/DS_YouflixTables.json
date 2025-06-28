@@ -1,0 +1,26 @@
+{
+	"name": "DS_YouflixTables",
+	"properties": {
+		"description": "Data set pointing to the youflix schema tables in MS SQL Server - LAIDBACKOYSTER-\\MSSQLSERVERTRAIN",
+		"linkedServiceName": {
+			"referenceName": "LS_SqlServer",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"tableName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "youflix",
+			"table": {
+				"value": "@dataset().tableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

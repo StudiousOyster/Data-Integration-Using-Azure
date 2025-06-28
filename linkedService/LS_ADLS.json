@@ -1,15 +1,16 @@
 {
-	"name": "syn-di-mentoring-cm-WorkspaceDefaultStorage",
+	"name": "LS_ADLS",
 	"type": "Microsoft.Synapse/workspaces/linkedservices",
 	"properties": {
-		"typeProperties": {
-			"url": "https://stdimentoringdatalakecm.dfs.core.windows.net"
-		},
+		"description": "Linked service to ADLS",
+		"annotations": [],
 		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://stdimentoringdatalakecm.dfs.core.windows.net/"
+		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
 			"type": "IntegrationRuntimeReference"
-		},
-		"annotations": []
+		}
 	}
 }

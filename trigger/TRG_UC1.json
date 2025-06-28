@@ -1,0 +1,26 @@
+{
+	"name": "TRG_UC1",
+	"properties": {
+		"description": "Trigger to start the databricks notebook to move files from bronze layer to the silver layer",
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "PL_DatabricksNotebook_Silver",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/data/blobs/bronze/youflix/success.csv",
+			"blobPathEndsWith": "success.csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/e6e26758-6985-4b07-90d1-e2e77c905ead/resourceGroups/rg-di-mentoring-cm/providers/Microsoft.Storage/storageAccounts/stdimentoringdatalakecm",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

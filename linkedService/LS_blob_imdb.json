@@ -1,10 +1,10 @@
 {
-	"name": "LS_YouFlixWatermark",
+	"name": "LS_blob_imdb",
 	"type": "Microsoft.Synapse/workspaces/linkedservices",
 	"properties": {
-		"description": "Linked service to azure table - YouFlixWatermark which stores the watermark values, the table names and watermark columns",
+		"description": "Linked service to imdb folder in stdimentoringblobcm",
 		"annotations": [],
-		"type": "AzureTableStorage",
+		"type": "AzureBlobStorage",
 		"typeProperties": {
 			"sasUri": {
 				"type": "AzureKeyVaultSecret",
@@ -12,7 +12,7 @@
 					"referenceName": "LS_kv_di_mentoring_cm1",
 					"type": "LinkedServiceReference"
 				},
-				"secretName": "SAS-YouflixWatermark"
+				"secretName": "Blob-imdb-SAS"
 			}
 		},
 		"connectVia": {

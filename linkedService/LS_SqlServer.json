@@ -1,0 +1,32 @@
+{
+	"name": "LS_SqlServer",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"description": "Linked service to MS SQL Server - LAIDBACKOYSTER-\\MSSQLSERVERTRAIN",
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_kv_di_mentoring_cm1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "ConnString-MSSQLServer"
+			},
+			"userName": "LAIDBACKOYSTER-\\chipp",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_kv_di_mentoring_cm1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SQLServer-Pwd"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

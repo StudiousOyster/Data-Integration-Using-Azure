@@ -1,0 +1,353 @@
+{
+	"name": "PL_SQLServer_BronzeADLS",
+	"properties": {
+		"description": "To transfer files from MS SQL Server (on premises) to ADLS/bronze/youflix/ folder",
+		"activities": [
+			{
+				"name": "PL Start Time",
+				"description": "To store the pipeline start time to store as watermark value",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PLstartTime",
+					"value": {
+						"value": "@formatDateTime(pipeline().TriggerTime, 'yyyy-MM-ddTHH:mm:ss.fffZ')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "WatermarkTable Lookup",
+				"description": "To lookup the azure table YouflixWatermark",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "PL Start Time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureTableSource",
+						"azureTableSourceIgnoreTableNotFound": false
+					},
+					"dataset": {
+						"referenceName": "DS_YouFlixWatermark_Table",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Looping through Tables",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "WatermarkTable Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('WatermarkTable Lookup').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy SQL Tables to ADLS bronze",
+							"description": "To copy the files into adls -data/bronze/youflix/ into respective folders for each table",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@concat('select * ',\n'from youflix.[',item().PartitionKey,']',\n' where ', item().watermark_column, ' >= ''', formatDateTime(item().watermark, 'yyyy-MM-dd HH:mm:ss.fff'), '''',\n' and ', item().watermark_column, ' < ''', variables('PLstartTime'),''''\n)",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_YouflixTables",
+									"type": "DatasetReference",
+									"parameters": {
+										"tableName": {
+											"value": "@item().PartitionKey",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ADLS_bronze_Youflix",
+									"type": "DatasetReference",
+									"parameters": {
+										"folderName": {
+											"value": "youflix_@{item().PartitionKey}",
+											"type": "Expression"
+										},
+										"fileName": {
+											"value": "youflix_@{item().PartitionKey}_@{formatDateTime(utcNow(), 'yyyyMMddhhmmss')}.csv",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Update YouFlixWatermark",
+							"description": "To update the watermark column in the YouFlix watermark table for the respective files/partitionkeys",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy SQL Tables to ADLS bronze",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureTableSource",
+									"additionalColumns": [
+										{
+											"name": "updated_watermark",
+											"value": {
+												"value": "@variables('PLstartTime')",
+												"type": "Expression"
+											}
+										}
+									],
+									"azureTableSourceQuery": {
+										"value": "@concat(\n    'PartitionKey eq ''',\n    item().PartitionKey,\n    ''''\n)",
+										"type": "Expression"
+									},
+									"azureTableSourceIgnoreTableNotFound": false
+								},
+								"sink": {
+									"type": "AzureTableSink",
+									"azureTableInsertType": "merge",
+									"azureTablePartitionKeyName": "PartitionKey",
+									"azureTableRowKeyName": "RowKey",
+									"writeBatchSize": 10000
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 4,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "PartitionKey",
+												"type": "String"
+											},
+											"sink": {
+												"name": "PartitionKey",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "RowKey",
+												"type": "String"
+											},
+											"sink": {
+												"name": "RowKey",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "Timestamp",
+												"type": "DateTimeOffset"
+											},
+											"sink": {
+												"name": "Timestamp",
+												"type": "DateTimeOffset"
+											}
+										},
+										{
+											"source": {
+												"name": "updated_watermark",
+												"type": "String"
+											},
+											"sink": {
+												"name": "watermark",
+												"type": "DateTimeOffset"
+											}
+										},
+										{
+											"source": {
+												"name": "watermark_column",
+												"type": "String"
+											},
+											"sink": {
+												"name": "watermark_column",
+												"type": "String"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_YouFlixWatermark_Table",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_YouFlixWatermark_Table",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Create Success file",
+				"description": "To create the Success.csv file in the main data/youflix/bronze folder",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Looping through Tables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT 'SUCCESS!!!'\nWHERE 1=1;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_YouflixTables",
+						"type": "DatasetReference",
+						"parameters": {
+							"tableName": "device"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ADLS_bronze_Youflix",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderName": {
+								"value": "@{string('')}",
+								"type": "Expression"
+							},
+							"fileName": "Success.csv"
+						}
+					}
+				]
+			}
+		],
+		"variables": {
+			"PLstartTime": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-06-10T20:22:54Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

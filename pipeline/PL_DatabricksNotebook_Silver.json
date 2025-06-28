@@ -1,0 +1,32 @@
+{
+	"name": "PL_DatabricksNotebook_Silver",
+	"properties": {
+		"description": "To move the files from bronze layer to the respective delta tables in the silver layer",
+		"activities": [
+			{
+				"name": "bronze_silver_move",
+				"description": "To move the files from bronze layer to siler layer after minor transformations",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Workspace/My_Notebooks/uc1_load_bronze_to_silver"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Databricks",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-06-10T19:52:33Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

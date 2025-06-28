@@ -1,0 +1,25 @@
+{
+	"name": "DS_blob_imdb",
+	"properties": {
+		"description": "dataset to the files inside the imdb container in the blob - stdimentoringblobcm",
+		"linkedServiceName": {
+			"referenceName": "LS_blob_imdb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "imdb"
+			},
+			"columnDelimiter": "\t",
+			"compressionCodec": "gzip",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": ""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}
